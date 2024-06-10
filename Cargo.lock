@@ -117,7 +117,7 @@ dependencies = [
 
 [[package]]
 name = "connector"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "mockito",
  "reqwest",
@@ -145,14 +145,14 @@ checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
 
 [[package]]
 name = "data_sink"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "connector",
 ]
 
 [[package]]
 name = "data_source"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "connector",
 ]
@@ -713,7 +713,7 @@ dependencies = [
 
 [[package]]
 name = "pump_copy"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "connector",
  "data_sink",
@@ -725,7 +725,7 @@ dependencies = [
 
 [[package]]
 name = "pump_fun"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "connector",
  "data_sink",
