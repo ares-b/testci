@@ -1,0 +1,15 @@
+{
+    "packages": {
+      "connector": {},
+      "data_sink": {},
+      "data_source": {},
+      "pump_copy": {},
+      "pump_fun": {}
+    },
+    "plugins": [
+        {
+        "type": "cargo-workspace"
+        }
+    ],
+    "release-type": "rust"
+  }

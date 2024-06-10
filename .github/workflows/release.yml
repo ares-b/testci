@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git curl jq
+
+      - name: Install cargo-release
+        run: cargo install cargo-release
+
+      - name: Determine Next Version
+        id: next_version
+        run: |
+          NEXT_VERSION=$(cargo release --dry-run | grep -oP "(?<=Bumping version from ).* to \K.*(?= via)")
+          echo "::set-output name=next_version::$NEXT_VERSION"
+
+      - name: Generate Changelog
+        run: |
+          git log $(git describe --tags --abbrev=0)..HEAD --pretty=format:"* %s" > CHANGELOG.md
+          git add CHANGELOG.md
+          git commit -m "chore: update changelog [skip ci]"
+
+      - name: Create Release PR
+        run: |
+          git checkout -b release/$GITHUB_RUN_ID
+          echo "version = \"${{ steps.next_version.outputs.next_version }}\"" > version.txt
+          git add version.txt
+          git commit -m "chore: release version ${{ steps.next_version.outputs.next_version }}"
+          git push --set-upstream origin release/$GITHUB_RUN_ID
+          gh pr create --title "Release ${{ steps.next_version.outputs.next_version }}" --body "Release version ${{ steps.next_version.outputs.next_version }}"
+
+      - name: Build Binaries
+        run: cargo build --release
+
+      - name: Archive Binaries
+        run: |
+          mkdir artifacts
+          cp target/release/* artifacts/
+        shell: bash
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.next_version.outputs.next_version }}
+          release_name: Release ${{ steps.next_version.outputs.next_version }}
+          body: |
+            # Changelog
+            ${{ steps.next_version.outputs.next_version }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/*
+          asset_name: ${{ steps.next_version.outputs.next_version }}-binaries.zip
+          asset_content_type: application/zip
